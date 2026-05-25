@@ -1,9 +1,9 @@
 import mongoose, { mongo } from "mongoose";
-import Restaurant from "./restaurant";
+import Restaurant from "./restaurant.js";
 
 const categorySchema  = new mongoose.Schema(
     {
-        RestaurantId: 
+        restaurantId: 
         {
             type: mongoose.Types.ObjectId,
             ref: "Restaurant",

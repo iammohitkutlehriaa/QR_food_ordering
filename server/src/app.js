@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./middlewares/error.js";
 import authRoutes from "./routes/auth.js";
 import restaurantRoutes from "./routes/restaurant.js";
+import categoryRoutes from "./routes/category.js"
+import MenuItemRoutes from "./routes/menuItem.js";
 
 const app = express();
 
@@ -16,7 +18,9 @@ app.use(express.json({limit: "16kb"}));
 app.use(express.urlencoded({extended: true, limit:"16kb"}));
 app.use(cookieParser());
 app.use("/api/v1/auth",authRoutes);
-app.use("/api/v1/restaurants",restaurantRoutes)
+app.use("/api/v1/restaurants",restaurantRoutes);
+app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/menu-items", MenuItemRoutes);
 app.use(errorHandler);
 
 // test route

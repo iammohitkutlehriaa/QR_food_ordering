@@ -6,7 +6,6 @@ const authenticate = async (req,res,next) => {
     try {const  authHeader = req.headers.authorization;
         const token  = req.cookies?.token ||(authHeader && authHeader.startsWith("Bearer")
     ? authHeader.split(" ")[1]: null);
-    console.log("TOKEN",token)
         if(!token) {
             throw new apiError(401,"Unauthorized - please login");
         }
