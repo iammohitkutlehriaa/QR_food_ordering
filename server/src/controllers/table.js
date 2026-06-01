@@ -19,7 +19,7 @@ const createTable = async (req, res, next) => {
       throw new apiError(404, "admin not found");
     }
     const qrToken = uuidv4();
-    const qrUrl = `{$process.env.CLIENT_URL}/menu?token=${qrToken}`;
+    const qrUrl = `${process.env.CLIENT_URL}/menu?token=${qrToken}`;
     const qrImageBuffer = await QrCode.toBuffer(qrUrl);
     const result = await uploadToCloudinary(qrImageBuffer, "qr-codes");
     const qrCode = result.secure_url;
@@ -55,4 +55,24 @@ const getTables = async (req, res, next) => {
   }
 };
 
-export { createTable, getTables };
+const verifyTable = async (req,res,next) => {
+    try {
+        const {token} = req.params;
+        if(!token) {
+            throw new apiError(400, "Token is required")
+        }
+        const table = await Table.findOne({qrToken: token})
+        if(!table) {
+            throw new apiError(404, "Table is not found")
+        }
+        const restaurant = await Restaurant.findById(table.restaurantId);
+        return res.status(200).json(
+            new apiResponse(200,{table,restaurant}, "Table verified successfully")
+        )
+    }
+    catch(err) {
+        next(err)
+    }
+}
+
+export { createTable, getTables , verifyTable};
