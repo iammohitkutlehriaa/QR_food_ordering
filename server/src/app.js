@@ -8,6 +8,7 @@ import categoryRoutes from "./routes/category.js"
 import MenuItemRoutes from "./routes/menuItem.js";
 import tableRoutes from "./routes/table.js"
 import orderRoutes from "./routes/order.js";
+import paymentRouter from "./routes/payment.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/menu-items", MenuItemRoutes);
 app.use("/api/v1/tables",tableRoutes);
 app.use("/api/v1/orders",orderRoutes);
+app.use("/api/v1/payments", paymentRouter)
 
 app.use(errorHandler);
 

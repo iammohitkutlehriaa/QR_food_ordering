@@ -47,8 +47,10 @@ const orderSchema = new mongoose.Schema(
       default: "unpaid",
     },
   },
-  { timestamps: true },
-);
+  { timestamps: true });
+  orderSchema.index({restaurantId: 1, status: 1}),
+  orderSchema.index({tableId: 1});
+
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
