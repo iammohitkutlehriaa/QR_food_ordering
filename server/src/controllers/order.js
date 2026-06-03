@@ -77,4 +77,43 @@ const updateOrderStatus = async (req,res,next) => {
   }
 }
 
-export {placeOrder, getOrders, updateOrderStatus}
+
+const getOrderById = async(req,res,next) => {
+  try {
+    const { id } = req.params;
+    const order = await Order.findById(id)
+    .populate("restaurantId", "name")
+    .populate("items.menuItemId", "name price")
+    if(!order) {
+      throw new apiError(404, "Order not found")
+    }
+    return res.status(200).json(
+    new apiResponse(200, order, "Order fetched successfully")
+  );
+  } 
+  catch(err) {
+    next(err)
+  }
+}
+
+const getKitchenOrders = async (req,res,next) => {
+  try {
+    const restaurant = await Restaurant.findOne({owner: req.user._id})
+    if(!restaurant){
+      throw new apiError(404, "Restaurant is not found")
+    }
+    const orders = await Order.find({
+      restaurantId: restaurant._id,
+      status: {$in: ["pending", "confirmed", "preparing"]}
+    }).sort({createdAt: 1})
+    return res.status(200).json(
+    new apiResponse(200, orders, "Kitchen order fetched sucessfully...")
+  )
+  }
+  catch(err) {
+    next(err)
+  }
+}
+
+
+export {placeOrder, getOrders, updateOrderStatus, getOrderById, getKitchenOrders}
