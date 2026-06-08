@@ -10,12 +10,16 @@ const authenticate = async (req,res,next) => {
             throw new apiError(401,"Unauthorized - please login");
         }
         const decoded = jwt.verify(token,process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId).select("-password");
+        const user = await User.findById(decoded.userId).select("-password")
 
         if(!user) {
             throw new apiError(401, "user not found")
         }
+        if(!user.isActive){
+            throw new apiError(401, "Account deactivated")
+        }
         req.user = user;
+
         next();
     } catch(err) {
         next(err);
