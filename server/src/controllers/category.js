@@ -58,6 +58,24 @@ const getCategories = async (req, res, next) => {
   }
 };
 
+const getPublicCategories = async(req,res, next) => {
+  try{
+  const {restaurantId} = req.params;
+  if(!restaurantId) {
+    throw new apiError(404, "Restaurant id is required")
+  }
+  const categories = await Category.find({
+    restaurantId: restaurantId,
+  }); 
+  return res.status(200).json(
+    new apiResponse(200, categories, "Category fetched sucessFully")
+  )
+  }
+  catch(err) {
+    next(err)
+  }
+} 
+
 // update category
 
 const updateCategory = async (req, res, next) => {
@@ -105,4 +123,4 @@ const deleteCategory = async (req, res, next) => {
   }
 };
 
-export { createCategory, getCategories, updateCategory, deleteCategory };
+export { createCategory, getCategories, getPublicCategories, updateCategory, deleteCategory };

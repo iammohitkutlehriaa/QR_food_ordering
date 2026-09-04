@@ -3,6 +3,7 @@ import Restaurant from "../models/restaurant.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+import { getPublicCategories } from "./category.js";
 
 // create
 const createMenuItem = async (req, res, next) => {
@@ -52,6 +53,7 @@ const getMenuItem = async (req, res, next) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page -1)*limit;
+    const filter = { restaurantId: restaurant._id };
     const { categoryId, isVeg } = req.query;
     if(categoryId) filter.categoryId = categoryId;
     if (isVeg !== undefined) filter.isVeg = isVeg === "true";
@@ -69,6 +71,31 @@ const getMenuItem = async (req, res, next) => {
     next(err);
   }
 };
+
+const getPublicMenuItem = async(req, res, next) => {
+  try {
+    const {restaurantId } = req.params;
+    if(!restaurantId) {
+      throw new apiError(400, "restaurant id is required")
+    }
+    const { categoryId } = req.query;
+    
+    if(!categoryId) {
+      throw new apiError(400, "Category id is required")
+    }
+    const filter = {
+      restaurantId,
+      categoryId
+    }
+     const menuItems = await MenuItem.find(filter)
+    return res.status(200).json(
+      new apiResponse(200, menuItems , "Menu items fetched sucessfully...")
+    )
+  }
+  catch(err) {
+    next(err)
+  }
+}
 
 // update menuItems;
 const updateMenuItem = async (req, res, next) => {
@@ -124,4 +151,4 @@ const deleteMenuItem = async (req, res, next) => {
   }
 };
 
-export { createMenuItem, getMenuItem, updateMenuItem, deleteMenuItem };
+export { createMenuItem, getMenuItem,getPublicMenuItem, updateMenuItem, deleteMenuItem };

@@ -6,7 +6,7 @@ import apiResponse from "../utils/apiResponse.js";
 
 const placeOrder = async (req, res, next) => {
   try {
-    const { tableId, customerName, items } = req.body;
+    const { tableId, customerName, items , totalAmount} = req.body;
     if (!tableId || !items) {
       throw new apiError(403, "tableId , customerName is required");
     }
@@ -14,9 +14,6 @@ const placeOrder = async (req, res, next) => {
     if (!table) {
       throw new apiError(404, "table not found");
     }
-    const totalAmount = items.reduce((sum, item) => {
-      return sum + item.price * item.quantity;
-    }, 0);
     const createOrder = await Order.create({
       tableId,
       tableNumber: table.tableNumber,
