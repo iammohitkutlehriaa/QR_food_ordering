@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Clock3, CircleCheck, ChefHat, BellRing, BadgeCheck } from "lucide-react";
+import { Clock3, CircleCheck, ChefHat, BellRing, BadgeCheck , Circle} from "lucide-react";
 
 function OrderTracking() {
   const { id } = useParams();
@@ -47,7 +47,7 @@ function OrderTracking() {
       <div>
         {statuses.map((status,index) => (
           <div key={status.key}>
-            <span>{index <= currentIndex ? status.icon : "red_circle:"}</span>
+            <span>{index <= currentIndex ? status.icon : <Circle size={20} color="gray" /> }</span>
             <span>{status.label}</span>
           </div>
         ))}

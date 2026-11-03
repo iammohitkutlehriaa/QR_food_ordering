@@ -93,26 +93,25 @@ const getOrderById = async(req,res,next) => {
   catch(err) {
     next(err)
   }
-}
+};
 
 const getKitchenOrders = async (req,res,next) => {
   try {
-    const restaurant = await Restaurant.findOne({owner: req.user._id})
-    if(!restaurant){
-      throw new apiError(404, "Restaurant is not found")
+    if(!req.user.restaurantId) {
+      throw new apiError(404, "No restaurant assinged to this user");
     }
     const orders = await Order.find({
-      restaurantId: restaurant._id,
-      status: {$in: ["pending", "confirmed", "preparing"]}
-    }).sort({createdAt: 1})
-    return res.status(200).json(
-    new apiResponse(200, orders, "Kitchen order fetched sucessfully...")
-  )
+      restaurantId: req.user.restaurantId,
+
+      status: {$in:["pending", "confirmed", "preparing",]},
+    })
+    .populate("items.menuItemId" , "name").sort({createdAt:1});
+    return res.status(200).json(new apiResponse(200, orders, "Kitchen order fetched sucessfully"));
   }
   catch(err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 
 export {placeOrder, getOrders, updateOrderStatus, getOrderById, getKitchenOrders}

@@ -10,6 +10,7 @@
     const [cartItems, setCartItems] = useState(
       JSON.parse(localStorage.getItem("cart") || "[]"),
     );
+    const [isPlacingOrder , setIsPlacingOrder] = useState(false);
 
 
     const total = cartItems.reduce(
@@ -29,36 +30,45 @@
     localStorage.setItem("cart", JSON.stringify(newCart))
   };
 
-  const placeOrder  = async() => {
-    try {
-    const items = cartItems.map(item => ({
-
-      menuItemId : item._id,  
+ const placeOrder = async() => {
+  if(cartItems.length === 0 ) {
+    alert("Your cart is empty");
+    return;
+  }
+  if(!customerName.trim()) {
+    alert("Please enter your name");
+    return;
+  }
+  if(!tableId) {
+    alert("Table not found . Please scan the QR code again");
+    return;
+  }
+  setIsPlacingOrder(true);
+  try{
+    const items = cartItems.map(item =>({
+      menuItemId : item._id,
       quantity: item.quantity,
       price: Number(item.price)
     }));
-
-    const res = await axios.post(`http://localhost:8000/api/v1/orders`,{
-
+    const res  = await axios.post(`http://localhost:8000/api/v1/orders`,{
       tableId,
       customerName,
       items,
-      totalAmount: total
-    }
-    
-    )
-    localStorage.removeItem("cart")
-    setCartItems([])
-    navigate(`/order/${res.data.data._id}`)
+      totalAmount : total
+    });
+    localStorage.removeItem("cart");
+    setCartItems([]);
+    navigate(`/order/${res.data.data._id}`);
+  } catch(err) {
+    console.log(err);
+    alert("order failed : " + err.response?.data?.message || err.message);
   }
+  finally {
+    setIsPlacingOrder(false);
+  }
+ };
 
-  catch(err)
-  {
-    console.log(err)
-    alert("Order failed", + err.message)
-    alert(JSON.stringify(err.response?.data))
-  }
-  }
+  
     return (
       <div
         className="min-h-screen p-4 text-white"
@@ -103,7 +113,7 @@
         value={customerName}
       onChange={(e) => setCustomerName(e.target.value)}
         />
-        <button onClick={placeOrder}>Place Order</button>
+        <button onClick={placeOrder} disabled={isPlacingOrder}>{isPlacingOrder ? "Placing..." :"place Order" }</button>
       </div>
     );
   }  
