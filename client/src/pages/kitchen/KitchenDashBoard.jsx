@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const NEXT_STATUS = {
   pending: "confirmed",
   confirmed: "preparing",
   preparing: "ready",
+  ready: "served",
 };
 
 function KitchenDashBoard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
 
@@ -21,6 +24,11 @@ function KitchenDashBoard() {
       });
       setOrders(res.data.data);
     } catch (err) {
+      if( err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+      }
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);

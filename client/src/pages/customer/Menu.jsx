@@ -1,12 +1,11 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {ShoppingCart, Leaf , Drumstick, Plus, Trash2} from "lucide-react";
-
+import { ShoppingCart, Leaf, Drumstick, Plus, Trash2 } from "lucide-react";
 
 function Menu() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const qrToken = searchParams.get("token");
   const [tableData, setTableData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,8 +13,10 @@ function Menu() {
   const [categories, setCategories] = useState([]);
   const [selectCategory, setSelectCategory] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
-  const [cartItems, setCartItems] = useState(JSON.parse(localStorage.getItem("cart")|| "[]"));
-  const [search , setSearch] = useState("");
+  const [cartItems, setCartItems] = useState(
+    JSON.parse(localStorage.getItem("cart") || "[]"),
+  );
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchTable = async () => {
@@ -24,7 +25,7 @@ function Menu() {
           `http://localhost:8000/api/v1/tables/verify/${qrToken}`,
         );
         setTableData(tableRes.data.data);
-        localStorage.setItem("tableId", tableRes.data.data.table._id)
+        localStorage.setItem("tableId", tableRes.data.data.table._id);
         const restaurantId = tableRes.data.data.restaurant._id;
         const catRes = await axios.get(
           `http://localhost:8000/api/v1/categories/public/${restaurantId}`,
@@ -65,28 +66,24 @@ function Menu() {
       );
       let updated;
       if (existingItem) {
-         updated = prevItems.map((cartItem) =>
+        updated = prevItems.map((cartItem) =>
           cartItem._id === item._id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem,
         );
       } else {
-        updated = [...prevItems, {...item, quantity: 1}];
-
+        updated = [...prevItems, { ...item, quantity: 1 }];
       }
       localStorage.setItem("cart", JSON.stringify(updated));
       return updated;
     });
   };
 
-  const cartCount = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0,
-  );
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  const filteredItem = menuItems.filter(item => 
-    item.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredItem = menuItems.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -143,12 +140,13 @@ function Menu() {
         </div>
 
         <div className="px-4 pb-2">
-          <input type="text" 
-          placeholder="Search dishes...."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-full px-4  py-2 text-sm text-white outline-none border border-white/10"
-          style={{backgroundColor: "#16213E"}}
+          <input
+            type="text"
+            placeholder="Search dishes...."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-full px-4  py-2 text-sm text-white outline-none border border-white/10"
+            style={{ backgroundColor: "#16213E" }}
           />
         </div>
 
@@ -160,14 +158,12 @@ function Menu() {
               style={{ backgroundColor: "#16213E" }}
             >
               <div className="relative h-32 overflow-hidden rounded-xl bg-black/10">
-                <span
-                  className={`absolute left-2 top-2 h-4 w-4 rounded-md border text-[10px] ${
-                    item.isVeg
-                      ?  <Leaf size={12} className="text-green-400" />
-                      : <Drumstick size={12} className="border-red-400 text-red-400" />
-                  }`}
-                >
-            
+                <span className="absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-md border border-white/20 bg-black/50">
+                  {item.isVeg ? (
+                    <Leaf size={12} className="text-green-400" />
+                  ) : (
+                    <Drumstick size={12} className="text-red-400" />
+                  )}
                 </span>
 
                 {item.image ? (
@@ -212,11 +208,13 @@ function Menu() {
 
         {cartCount > 0 && (
           <button
-          onClick={() => navigate("/cart")}
+            onClick={() => navigate("/cart")}
             className="fixed bottom-5 left-1/2 z-20 flex w-[calc(100%-32px)] max-w-sm -translate-x-1/2 items-center justify-between rounded-full px-5 py-3 font-bold text-white shadow-2xl"
             style={{ backgroundColor: "#FF6B35" }}
           >
-            <span>{cartCount} item{cartCount > 1 ? "s" : ""}</span>
+            <span>
+              {cartCount} item{cartCount > 1 ? "s" : ""}
+            </span>
             <span>View cart</span>
           </button>
         )}

@@ -103,7 +103,7 @@ const getKitchenOrders = async (req,res,next) => {
     const orders = await Order.find({
       restaurantId: req.user.restaurantId,
 
-      status: {$in:["pending", "confirmed", "preparing",]},
+      status: {$in:["pending", "confirmed", "preparing","ready"]},
     })
     .populate("items.menuItemId" , "name").sort({createdAt:1});
     return res.status(200).json(new apiResponse(200, orders, "Kitchen order fetched sucessfully"));
