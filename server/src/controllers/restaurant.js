@@ -6,18 +6,22 @@ import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 // create restaurant
 const createRestaurant = async (req, res, next) => {
   try {
-    const { name, address, settings } = req.body;
+    const { name, settings } = req.body;
     if (!name) {
       throw new apiError(400, "restaurnat name is required");
     }
-    // slug genrate form name
+
+    const mine = await Restaurant.findOne({ owner: req.user._id });
+    if (mine) {
+      throw new apiError(409, "You already have a restaurant");
+    }
+
     const slug = name.toLowerCase().trim().replace(/\s+/g, "-");
-    //slug already exist..
     const existing = await Restaurant.findOne({ slug });
     if (existing) {
-      throw new apiError(409, "Restaurant is alresdy exist");
+      throw new apiError(409, "Restaurant name is already taken");
     }
-    // logo upload if given..
+
     let logoUrl = "";
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer, "logos");
@@ -32,7 +36,7 @@ const createRestaurant = async (req, res, next) => {
     });
     return res
       .status(201)
-      .json(new apiResponse(201, restaurant), "Restaurant created sucessfully");
+      .json(new apiResponse(201, restaurant, "Restaurant created sucessfully"));
   } catch (err) {
     next(err);
   }

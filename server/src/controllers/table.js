@@ -88,4 +88,75 @@ const verifyTable = async (req, res, next) => {
   }
 };
 
-export { createTable, getTables , verifyTable};
+const updateTable = async(req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findOne({owner:req.user._id});
+    if(!restaurant) {
+      throw apiError(404, "Restaurant is not found");
+    }
+    const {isActive} = req.body;
+    if(typeof isActive !== "boolean") {
+      throw new apiError(400 , "isActive must be true or false");
+    }
+    const table = await Table.findOne({
+      _id:req.params.id,
+      restaurantId: restaurant._id,
+    });
+    if(!table) {
+      throw new apiError(404, "Table is not found");
+    }
+    table.isActive = isActive;
+    await table.save();
+    return res.status(200).json(new apiResponse(200 , table , "Table updated successfully"));
+  } catch(err) {
+    next(err);
+  }
+};
+
+const deleteTable = async(req,res ,next) => {
+  try {
+    const restaurant = await Restaurant.findOne({owner: req.user._id});
+    if(!restaurant) {
+      throw new apiError(404 , "Restaurant is not found");
+    }
+    const table = await Table.findOneAndDelete({
+      _id:req.params.id,
+      restaurantId: restaurant._id,
+    });
+    if(!table) {
+      throw new apiError(404, "Table is not found");
+    } return res.status(200).json(new apiResponse(200 , {} , "table deleted successfully"));
+  } catch(err) {
+    next(err)
+  }
+};
+
+const regenerateQr = async(req, res, next) => {
+  try{
+    const restaurant = await Restaurant.findOne({owner: req.user._id});
+    if(!restaurant) {
+      throw new apiError(404, "restaurnat is not found");
+    } 
+    const table = await Table.findOne({
+      _id:req.params.id,
+      restaurantId: restaurant._id,
+    });
+    if(!table) {
+      throw new apiError(404,"table not found");
+    }
+    const qrToken = uuidv4();
+    const qrUrl = `${process.env.CLIENT_URL}/menu?token=${qrToken}`;
+    const qrImageBuffer = await QrCode.toBuffer(qrUrl);
+    const result = await uploadToCloudinary(qrImageBuffer, "qr-codes");
+
+    table.qrToken = qrToken;
+    table.qrCode = result.secure_url;
+    await table.save();
+
+    return res.status(200).json(new apiResponse(200 ,table, "QR regenrate sucessfully"));
+  } catch(err) {
+    next(err);
+  }
+};
+
+export { createTable, getTables , verifyTable , updateTable , deleteTable, regenerateQr};

@@ -3,7 +3,7 @@ import Restaurant from "../models/restaurant.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
-import { getPublicCategories } from "./category.js";
+import Category from "../models/category.js";
 
 // create
 const createMenuItem = async (req, res, next) => {
@@ -17,11 +17,28 @@ const createMenuItem = async (req, res, next) => {
     if (!restaurant) {
       throw new apiError(404, "Restaurant  is not found");
     }
+
+    // NAYA: price check
+    if (Number.isNaN(Number(price)) || Number(price) < 0) {
+      throw new apiError(400, "Price must be a valid number");
+    }
+
+    // NAYA: category isi restaurant ki hai ya nahi
+    const category = await Category.findOne({
+      _id: categoryId,
+      restaurantId: restaurant._id,
+    });
+    if (!category) {
+      throw new apiError(404, "Category is not found");
+    }
+
+    // image upload (folder ka naam "menu-items", bina space ke)
     let imageUrl = "";
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "menu -items");
+      const result = await uploadToCloudinary(req.file.buffer, "menu-items");
       imageUrl = result.secure_url;
     }
+
     const menuItem = await MenuItem.create({
       restaurantId: restaurant._id,
       categoryId,
@@ -85,9 +102,10 @@ const getPublicMenuItem = async(req, res, next) => {
     }
     const filter = {
       restaurantId,
-      categoryId
-    }
-     const menuItems = await MenuItem.find(filter)
+      categoryId,
+      isAvailable: true
+    };
+     const menuItems = await MenuItem.find(filter).sort({sortOrder: 1 , createdAt: 1});
     return res.status(200).json(
       new apiResponse(200, menuItems , "Menu items fetched sucessfully...")
     )
@@ -101,10 +119,16 @@ const getPublicMenuItem = async(req, res, next) => {
 const updateMenuItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, price, isVeg, isAvailable, tags, sortOrder } =
-      req.body;
+    const { name, description, price, isVeg, isAvailable, tags, sortOrder } = req.body;
 
-    const menuItem = await MenuItem.findById(id);
+    const restaurant = await Restaurant.findOne({ owner: req.user._id });
+    if (!restaurant) {
+      throw new apiError(404, "Restaurant is not found");
+    }
+    const menuItem = await MenuItem.findOne({
+      _id: id,
+      restaurantId: restaurant._id,
+    });
     if (!menuItem) {
       throw new apiError(404, "Menu items are not found");
     }
@@ -113,8 +137,13 @@ const updateMenuItem = async (req, res, next) => {
       menuItem.image = result.secure_url;
     }
     if (name) menuItem.name = name;
-    if (description) menuItem.description = description;
-    if (price) menuItem.price = price;
+    if (description !== undefined) menuItem.description = description;
+    if (price !== undefined) {
+      if (Number.isNaN(Number(price)) || Number(price) < 0) {
+        throw new apiError(400, "Price must be a valid number");
+      }
+      menuItem.price = Number(price);
+    }
     if (isVeg !== undefined) menuItem.isVeg = isVeg === "false" ? false : true;
     if (isAvailable !== undefined)
       menuItem.isAvailable = isAvailable === "false" ? false : true;
@@ -122,24 +151,25 @@ const updateMenuItem = async (req, res, next) => {
     if (sortOrder !== undefined) menuItem.sortOrder = sortOrder;
 
     await menuItem.save();
-
     return res
       .status(200)
-      .json(
-        new apiResponse(200, menuItem, "Menu item is updated successfully"),
-      );
+      .json(new apiResponse(200, menuItem, "Menu item is updated successfully"));
   } catch (err) {
     next(err);
   }
 };
 
-// delete menu - items
-
 const deleteMenuItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    const menuItem = await MenuItem.findByIdAndDelete(id);
+    const restaurant = await Restaurant.findOne({ owner: req.user._id });
+    if (!restaurant) {
+      throw new apiError(404, "Restaurant is not found");
+    }
+    const menuItem = await MenuItem.findOneAndDelete({
+      _id: id,
+      restaurantId: restaurant._id,
+    });
     if (!menuItem) {
       throw new apiError(404, "menu item is not found");
     }

@@ -1,35 +1,62 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import TablesTab from "./TableTab.jsx";
+
+const TABS = [
+  { key: "tables", label: "Tables & QR" },
+  { key: "categories", label: "Categories" },
+  { key: "menu", label: "Menu Items" },
+  { key: "orders", label: "Orders" },
+];
 
 function Dashboard() {
-  const [menuItems, setMenuItems] = useState([]);
+  const [activeTab, setActiveTab] = useState("tables");
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:8000/api/v1/menu-items", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setMenuItems(res.data.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchMenuItems();
-  }, []);
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    navigate("/login");
+  };
 
   return (
-    <div className="bg-[#1A1A2E] min-h-screen p-8">
-      {menuItems.map((item) => (
-        <div key={item._id} className="text-white">
-          <div>{item.name}</div>
-          <div>{item.price}</div>
-        </div>
-      ))}
+    <div className="min-h-screen text-white" style={{ backgroundColor: "#1A1A2E" }}>
+      <header
+        className="flex items-center justify-between px-4 py-3 border-b border-white/10"
+        style={{ backgroundColor: "#16213E" }}
+      >
+        <h1 className="text-xl font-bold">Admin Dashboard</h1>
+        <button
+          onClick={logout}
+          className="px-3 py-1 rounded text-sm border border-white/20"
+        >
+          Logout
+        </button>
+      </header>
+
+      <nav className="flex gap-2 overflow-x-auto px-4 py-3">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
+            style={{
+              backgroundColor: activeTab === tab.key ? "#FF6B35" : "#16213E",
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      <main className="px-4 pb-8">
+        {activeTab === "tables" && <TablesTab />}
+        {activeTab === "categories" && <p className="text-gray-400">Coming next</p>}
+        {activeTab === "menu" && <p className="text-gray-400">Coming next</p>}
+        {activeTab === "orders" && <p className="text-gray-400">Coming next</p>}
+      </main>
     </div>
   );
 }
-
 
 export default Dashboard;

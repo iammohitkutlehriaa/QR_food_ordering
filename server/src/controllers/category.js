@@ -3,6 +3,7 @@ import Restaurant from "../models/restaurant.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+import MenuItem from "../models/menuItem.js";
 
 // create category
 
@@ -46,44 +47,46 @@ const getCategories = async (req, res, next) => {
     }
     const categories = await Category.find({
       restaurantId: restaurant._id,
-      isActive: true,
     }).sort({ sortOrder: 1, createdAt: 1 });
     return res
       .status(200)
-      .json(
-        new apiResponse(200, categories, "Categories fetched successfully.."),
-      );
+      .json(new apiResponse(200, categories, "Categories fetched successfully.."));
   } catch (err) {
     next(err);
   }
 };
 
-const getPublicCategories = async(req,res, next) => {
-  try{
-  const {restaurantId} = req.params;
-  if(!restaurantId) {
-    throw new apiError(404, "Restaurant id is required")
+const getPublicCategories = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params;
+    if (!restaurantId) {
+      throw new apiError(400, "Restaurant id is required");
+    }
+    const categories = await Category.find({
+      restaurantId,
+      isActive: true,
+    }).sort({ sortOrder: 1, createdAt: 1 });
+    return res
+      .status(200)
+      .json(new apiResponse(200, categories, "Category fetched sucessFully"));
+  } catch (err) {
+    next(err);
   }
-  const categories = await Category.find({
-    restaurantId: restaurantId,
-  }); 
-  return res.status(200).json(
-    new apiResponse(200, categories, "Category fetched sucessFully")
-  )
-  }
-  catch(err) {
-    next(err)
-  }
-} 
-
-// update category
+};
 
 const updateCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, description, sortOrder, isActive } = req.body;
 
-    const category = await Category.findById(id);
+    const restaurant = await Restaurant.findOne({ owner: req.user._id });
+    if (!restaurant) {
+      throw new apiError(404, "Restaurant is not found");
+    }
+    const category = await Category.findOne({
+      _id: id,
+      restaurantId: restaurant._id,
+    });
     if (!category) {
       throw new apiError(404, "Category is not found");
     }
@@ -92,12 +95,11 @@ const updateCategory = async (req, res, next) => {
       category.image = result.secure_url;
     }
     if (name) category.name = name;
-    if (description) category.description = description;
+    if (description !== undefined) category.description = description;
     if (sortOrder !== undefined) category.sortOrder = sortOrder;
     if (isActive !== undefined) category.isActive = isActive;
 
     await category.save();
-
     return res
       .status(200)
       .json(new apiResponse(200, category, "Category updated successfully"));
@@ -106,15 +108,25 @@ const updateCategory = async (req, res, next) => {
   }
 };
 
-// Delete category
 const deleteCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    const category = await Category.findByIdAndDelete(id);
+    const restaurant = await Restaurant.findOne({ owner: req.user._id });
+    if (!restaurant) {
+      throw new apiError(404, "Restaurant is not found");
+    }
+    const category = await Category.findOne({
+      _id: id,
+      restaurantId: restaurant._id,
+    });
     if (!category) {
       throw new apiError(404, "Category  not found");
     }
+    const itemCount = await MenuItem.countDocuments({ categoryId: id });
+    if (itemCount > 0) {
+      throw new apiError(409, "Category has menu items. Delete or move them first");
+    }
+    await category.deleteOne();
     return res
       .status(200)
       .json(new apiResponse(200, {}, "Category is deleted Successfully..."));
@@ -122,5 +134,4 @@ const deleteCategory = async (req, res, next) => {
     next(err);
   }
 };
-
 export { createCategory, getCategories, getPublicCategories, updateCategory, deleteCategory };
