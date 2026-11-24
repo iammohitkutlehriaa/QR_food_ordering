@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TablesTab from "./TableTab.jsx";
+import CategoriesTab from"./CategoriesTab.jsx";
+import MenuItemsTab from "./MenuItemsTab.jsx";
 
 const TABS = [
   { key: "tables", label: "Tables & QR" },
@@ -51,8 +53,8 @@ function Dashboard() {
 
       <main className="px-4 pb-8">
         {activeTab === "tables" && <TablesTab />}
-        {activeTab === "categories" && <p className="text-gray-400">Coming next</p>}
-        {activeTab === "menu" && <p className="text-gray-400">Coming next</p>}
+        {activeTab === "categories" && <CategoriesTab/>}
+        {activeTab === "menu" && <MenuItemsTab/>}
         {activeTab === "orders" && <p className="text-gray-400">Coming next</p>}
       </main>
     </div>
