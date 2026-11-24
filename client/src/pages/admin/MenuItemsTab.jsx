@@ -1,40 +1,39 @@
-import { isValidElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../utils/api.js";
 
 
 function MenuItemsTab() {
-    const [items ,setItems] = useState([]);
-    const [categories , setCategories] = useState();
-    const [loading , setLoading] = useState([]);
-    const [error , setError] =useState("");
-    const [busy ,  setBusy] = useState(false);
-    
-    
-    const [name , setName] = useState("");
-    const [price , setPrice] = useState("");
-    const [categoryId , setCategoryId] = useState("");
-    cosnt [description , setDescription] = useState("");
-    const [isVeg , setIsveg] = useState(true);
-    const [image , setImage] = useState(null);
-    const [editingId , setEditingId] = useState(null);
-    const [fileKey , setFileKey] = useState(0);
+const [items, setItems] = useState([]);
+const [categories, setCategories] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+const [busy, setBusy] = useState(false);
+
+const [name, setName] = useState("");
+const [price, setPrice] = useState("");
+const [categoryId, setCategoryId] = useState("");
+const [description, setDescription] = useState("");
+const [isVeg, setIsVeg] = useState(true);
+const [image, setImage] = useState(null);
+const [editingId, setEditingId] = useState(null);
+const [fileKey, setFileKey] = useState(0);
 
 
-    const fetchAll = async() => {
-        try{
-            const [itemsRes, catRes] = await Promise.all([
-                api.get("/menu-items?limit=100"),
-                api.get("/categories"),
-            ]);
-            setItems(itemsRes.data.data);
-            setItems(catRes.data.data);
-            setError("");
-        } catch(err) {
-            setError(err.respone?.data?.message || err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+const fetchAll = async () => {
+  try {
+    const [itemsRes, catRes] = await Promise.all([
+      api.get("/menu-items?limit=100"),
+      api.get("/categories"),
+    ]);
+    setItems(itemsRes.data.data || []);
+    setCategories(catRes.data.data || []);
+    setError("");
+  } catch (err) {
+    setError(err.response?.data?.message || err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
     useEffect(() => {
         fetchAll();
@@ -45,7 +44,7 @@ function MenuItemsTab() {
         setPrice("");
         setCategoryId("");
         setDescription("");
-        setIsveg(true);
+        setIsVeg(true);
         setImage(null);
         setEditingId(null);
         setFileKey((K) => K + 1);
@@ -63,9 +62,9 @@ function MenuItemsTab() {
         }
         const formData = new FormData();
         formData.append("name", name.trim());
-        formData.apend("price" , price);
-        formData.apend("description", description);
-        formData.apend("isVeg" , String(isVeg));
+        formData.append("price" , price);
+        formData.append("description", description);
+        formData.append("isVeg" , String(isVeg));
 
         if(!editingId) formData.append("categoryId" , categoryId);
         if(image) formData.append("image" , image);
@@ -92,7 +91,7 @@ function MenuItemsTab() {
         setPrice(String(item.price));
         setCategoryId(item.categoryId?._id || "");
         setDescription(item.description || "");
-        setIsveg(item.isVeg);
+        setIsVeg(item.isVeg);
         setImage(null);
         setFileKey((K) => K + 1);
         window.scrollTo({top : 0, behavior: "smooth"}); 
@@ -143,7 +142,7 @@ function MenuItemsTab() {
             min="0"
             placeholder="Price" 
             value={price}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setPrice(e.target.value)}
             className="w-full p-2 rounded bg-gray-800 text-white outline-none"/>
 
 
@@ -218,7 +217,7 @@ function MenuItemsTab() {
                                 <span style={{color: "#FF6B35"}} className="font-bold">{"\u20B9"} {item.price}</span>
                             </div>
                             <p className="text-xs text-gray-400">
-                                {item.categoryId?.name || "N category"} . {""}
+                                {item.categoryId?.name || " category"} . {""}
                                 {item.isVeg ? "Veg" : "Non-veg"} . {""}
                                 {item.isAvailable ? "Available" : "Unavailable"} 
                             </p>

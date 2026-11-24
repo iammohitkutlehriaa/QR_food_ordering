@@ -1,18 +1,18 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import api from "../../utils/api.js";
-import { setDriver } from "mongoose";
+
 
 function CategoriesTab() {
-  const [categories, setCategories] = useState();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+const [categories, setCategories] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+const [busy, setBusy] = useState(false);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [image, useImage] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [fileKey, setFileKey] = useState(0);
+const [name, setName] = useState("");
+const [description, setDescription] = useState("");
+const [image, setImage] = useState(null);
+const [editingId, setEditingId] = useState(null);
+const [fileKey, setFileKey] = useState(0);
 
   const fetchCategories = async () => {
     try {
@@ -28,14 +28,15 @@ function CategoriesTab() {
   useEffect(() => {
     fetchCategories();
   }, []);
-  const resetform = () => {
+
+  const resetForm = () => {
     setName("");
     setDescription("");
     setImage(null);
     setEditingId(null);
-    setFileKey((K) => K + 1);
+    setFileKey((k) => k + 1);
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -90,7 +91,7 @@ function CategoriesTab() {
     }
   };
   if (loading) return <p className="text-gray-400">Loading...</p>;
-  if (err) return <p className="text-red-400">{error}</p>;
+  if (error) return <p className="text-red-400">{error}</p>;
 
   return (
     <div>
@@ -209,3 +210,6 @@ function CategoriesTab() {
     </div>
   );
 }
+
+
+export default CategoriesTab;
