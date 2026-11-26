@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import TablesTab from "./TableTab.jsx";
 import CategoriesTab from"./CategoriesTab.jsx";
 import MenuItemsTab from "./MenuItemsTab.jsx";
+import OrdersTab from "./OrdersTab.jsx";
 
 const TABS = [
   { key: "tables", label: "Tables & QR" },
@@ -55,7 +56,7 @@ function Dashboard() {
         {activeTab === "tables" && <TablesTab />}
         {activeTab === "categories" && <CategoriesTab/>}
         {activeTab === "menu" && <MenuItemsTab/>}
-        {activeTab === "orders" && <p className="text-gray-400">Coming next</p>}
+        {activeTab === "orders" && <OrdersTab />}
       </main>
     </div>
   );

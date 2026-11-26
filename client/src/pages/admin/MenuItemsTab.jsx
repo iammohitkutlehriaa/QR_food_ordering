@@ -167,7 +167,7 @@ const fetchAll = async () => {
                 <input
                 type="checkbox"
                 checked={isVeg}
-                onChange={(e) => setIsveg(e.target.checked)} />
+                onChange={(e) => setIsVeg(e.target.checked)} />
                 Vegetarian
             </label>
 
