@@ -4,7 +4,7 @@
   import {useNavigate} from "react-router-dom";
 
   function Cart() {
-      const [customerName, setCustomerName] = useState("");
+    const [customerName, setCustomerName] = useState("");
     const tableId = localStorage.getItem("tableId");
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState(
@@ -45,17 +45,16 @@
   }
   setIsPlacingOrder(true);
   try{
-    const items = cartItems.map(item =>({
-      menuItemId : item._id,
-      quantity: item.quantity,
-      price: Number(item.price)
-    }));
-    const res  = await axios.post(`http://localhost:8000/api/v1/orders`,{
-      tableId,
-      customerName,
-      items,
-      totalAmount : total
-    });
+    const items = cartItems.map((item) => ({
+  menuItemId: item._id,
+  quantity: item.quantity,
+}));
+
+const res = await axios.post(`http://localhost:8000/api/v1/orders`, {
+  tableId,
+  customerName,
+  items,
+});
     localStorage.removeItem("cart");
     setCartItems([]);
     navigate(`/order/${res.data.data._id}`);

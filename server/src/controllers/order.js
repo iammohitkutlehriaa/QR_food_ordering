@@ -3,23 +3,72 @@ import Restaurant from "../models/restaurant.js";
 import Table from "../models/table.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
+import mongoose from "mongoose";
+import MenuItem from "../models/menuItem.js";
 
 const placeOrder = async (req, res, next) => {
   try {
-    const { tableId, customerName, items , totalAmount} = req.body;
-    if (!tableId || !items) {
-      throw new apiError(403, "tableId , customerName is required");
+    const { tableId, customerName, items } = req.body;
+
+    if (!tableId || !mongoose.isValidObjectId(tableId)) {
+      throw new apiError(400, "Valid tableId is required");
     }
-    const table = await Table.findOne({ _id: tableId });
-    if (!table) {
+    if (!customerName || !customerName.trim()) {
+      throw new apiError(400, "Customer name is required");
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new apiError(400, "Order must have at least one item");
+    }
+
+    const table = await Table.findById(tableId);
+    if (!table || !table.isActive) {
       throw new apiError(404, "table not found");
     }
+
+    const qtyById = new Map();
+    for (const it of items) {
+      const quantity = Number(it.quantity);
+      if (
+        !it.menuItemId ||
+        !mongoose.isValidObjectId(it.menuItemId) ||
+        !Number.isInteger(quantity) ||
+        quantity < 1 ||
+        quantity > 20
+      ) {
+        throw new apiError(400, "Invalid item in order");
+      }
+      const key = String(it.menuItemId);
+      qtyById.set(key, (qtyById.get(key) || 0) + quantity);
+    }
+
+    const ids = [...qtyById.keys()];
+    const menuItems = await MenuItem.find({
+      _id: { $in: ids },
+      restaurantId: table.restaurantId,
+      isAvailable: true,
+    });
+    if (menuItems.length !== ids.length) {
+      throw new apiError(400, "Some items are unavailable for this restaurant");
+    }
+
+    let totalAmount = 0;
+    const orderItems = menuItems.map((m) => {
+      const quantity = qtyById.get(String(m._id));
+      totalAmount += m.price * quantity;
+      return {
+        menuItemId: m._id,
+        name: m.name,
+        price: m.price,
+        quantity,
+      };
+    });
+
     const createOrder = await Order.create({
       tableId,
       tableNumber: table.tableNumber,
       restaurantId: table.restaurantId,
-      customerName,
-      items,
+      customerName: customerName.trim(),
+      items: orderItems,
       totalAmount,
     });
     return res

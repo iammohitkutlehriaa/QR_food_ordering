@@ -46,9 +46,11 @@ const orderSchema = new mongoose.Schema(
       enum: ["paid", "unpaid"],
       default: "unpaid",
     },
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
   },
   { timestamps: true });
-  orderSchema.index({restaurantId: 1, status: 1}),
+  orderSchema.index({restaurantId: 1, status: 1});
   orderSchema.index({tableId: 1});
 
 
