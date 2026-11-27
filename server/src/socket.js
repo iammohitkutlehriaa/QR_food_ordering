@@ -1,4 +1,4 @@
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import User from "./models/user.js";
@@ -15,11 +15,12 @@ export const initSocket = (httpServer) => {
     },
   });
 
+  // Staff login check. Customers bina token ke connect ho sakte hain.
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
       if (!token) return next();
-      const decoded = jwt.verify(token.process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId).select("-password");
       if (!user || !user.isActive) return next(new Error("unauthorized"));
       socket.user = user;
@@ -30,31 +31,32 @@ export const initSocket = (httpServer) => {
   });
 
   io.on("connection", async (socket) => {
+    // Customer: sirf apne order ka room join karta hai
     socket.on("order:join", async (orderId) => {
       try {
         if (!mongoose.isValidObjectId(orderId)) return;
         const exists = await Order.exists({ _id: orderId });
         if (exists) socket.join(`order:${orderId}`);
       } catch (err) {
-        console.error("order: join error", err.message);
+        console.error("order:join error:", err.message);
       }
     });
 
+    // Staff: apne restaurant ka room join karta hai
     try {
       if (socket.user && ["admin", "kitchen"].includes(socket.user.role)) {
         let restaurantId = socket.user.restaurantId;
         if (!restaurantId) {
-          const r = await Restaurant.findOne({ owner: socket.user._id }).select(
-            "_id",
-          );
+          const r = await Restaurant.findOne({ owner: socket.user._id }).select("_id");
           restaurantId = r?._id;
         }
         if (restaurantId) socket.join(`restaurant:${restaurantId}`);
       }
     } catch (err) {
-      console.error("Staff join error.", err.message);
+      console.error("staff join error:", err.message);
     }
   });
+
   return io;
 };
 

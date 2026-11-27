@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { createSocket } from "../../utils/socket.js";
 
 const NEXT_STATUS = {
   pending: "confirmed",
@@ -46,13 +47,24 @@ function KitchenDashBoard() {
     } catch (err) {
       alert(err.response?.data?.message || err.message);
     }
+    fetchOrders();
   };
 
   useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  fetchOrders();
+  const interval = setInterval(fetchOrders, 30000);
+
+  const socket = createSocket(token);
+  socket.on("connect", fetchOrders);
+  socket.on("order:new", fetchOrders);
+  socket.on("order:updated", fetchOrders);
+
+  return () => {
+    clearInterval(interval);
+    socket.disconnect();
+  };
+}, []);
+
 
   if (loading) return <div className="p-4 text-white">Loading...</div>;
   if (error) return <div className="p-4 text-red-400">{error}</div>;

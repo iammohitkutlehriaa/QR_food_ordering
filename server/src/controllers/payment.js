@@ -3,7 +3,8 @@ import crypto from "crypto";
 import Order from "../models/order.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
-    import razorpay from "../config/razorpay.js";   
+import razorpay from "../config/razorpay.js";   
+import { emitOrderEvent } from "../socket.js";
 
 
     const createPayment  = async(req, res , next) => {
@@ -83,6 +84,7 @@ const verifyPayment = async (req, res, next) => {
         order.paymentStatus = "paid";
         order.razorpayPaymentId = razorpay_payment_id;
         await order.save();
+        emitOrderEvent("order:updated", order);
 
         return res
         .status(200)

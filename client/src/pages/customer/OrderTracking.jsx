@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   Circle,
 } from "lucide-react";
+import { createSocket } from "../../utils/socket.js";
 
 const API = "http://localhost:8000/api/v1";
 
@@ -49,11 +50,22 @@ function OrderTracking() {
     }
   }, [id]);
 
+
   useEffect(() => {
+  fetchOrder();
+  const interval = setInterval(fetchOrder, 30000);
+  return () => clearInterval(interval);
+}, [fetchOrder]);
+
+useEffect(() => {
+  const socket = createSocket();
+  socket.on("connect", () => {
+    socket.emit("order:join", id);
     fetchOrder();
-    const interval = setInterval(fetchOrder, 5000);
-    return () => clearInterval(interval);
-  }, [fetchOrder]);
+  });
+  socket.on("order:updated", fetchOrder);
+  return () => socket.disconnect();
+}, [id, fetchOrder]);
 
   const payNow = async () => {
     setPaying(true);

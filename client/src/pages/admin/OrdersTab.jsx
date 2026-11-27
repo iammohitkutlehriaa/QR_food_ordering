@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/api.js";
+import { createSocket } from "../../utils/socket.js";
 
 const FILTERS = ["all", "pending", "confirmed", "preparing", "ready", "served"];
 
@@ -38,10 +39,19 @@ function OrdersTab() {
       }
     };
 
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
-  }, [page, statusFilter]);
+  fetchOrders();
+  const interval = setInterval(fetchOrders, 30000);
+
+  const socket = createSocket(localStorage.getItem("token"));
+  socket.on("connect", fetchOrders);
+  socket.on("order:new", fetchOrders);
+  socket.on("order:updated", fetchOrders);
+
+  return () => {
+    clearInterval(interval);
+    socket.disconnect();
+  };
+}, [page, statusFilter]);
 
   const changeFilter = (f) => {
     setStatusFilter(f);

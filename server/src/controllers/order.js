@@ -5,6 +5,7 @@ import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import mongoose from "mongoose";
 import MenuItem from "../models/menuItem.js";
+import { emitOrderEvent } from "../socket.js";
 
 const placeOrder = async (req, res, next) => {
   try {
@@ -64,13 +65,16 @@ const placeOrder = async (req, res, next) => {
     });
 
     const createOrder = await Order.create({
+      
       tableId,
       tableNumber: table.tableNumber,
       restaurantId: table.restaurantId,
       customerName: customerName.trim(),
       items: orderItems,
       totalAmount,
+      
     });
+    emitOrderEvent("order:new", createOrder);
     return res
       .status(201)
       .json(new apiResponse(201, createOrder, "Order created successfully.."));
@@ -113,30 +117,60 @@ const getOrders = async (req, res, next) => {
   }
 };
 
-const updateOrderStatus = async (req,res,next) => {
-  
-  try{
-    const { id } = req.params;
-     const { status } = req.body;
+const NEXT_STATUS = {
+  pending: "confirmed",
+  confirmed: "preparing",
+  preparing: "ready",
+  ready: "served",
+};
 
-    if(!status) {
-      throw new apiError(400, "status  is required")
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      throw new apiError(400, "Invalid order id");
     }
-   
-    const order =  await Order.findById(id)
-    if(!order) {
-      throw new apiError(404, "order is not found")
+    if (!status) {
+      throw new apiError(400, "status  is required");
     }
-    order.status = status;
-    await order.save();
-    return res.status(200).json(
-    new apiResponse(200, order, "Order status updated succesfully")
-  )
+
+    let restaurantId = req.user.restaurantId;
+    if (!restaurantId) {
+      const restaurant = await Restaurant.findOne({ owner: req.user._id }).select("_id");
+      restaurantId = restaurant?._id;
+    }
+    if (!restaurantId) {
+      throw new apiError(404, "Restaurant is not found");
+    }
+
+    const order = await Order.findOne({ _id: id, restaurantId });
+    if (!order) {
+      throw new apiError(404, "order is not found");
+    }
+
+    if (NEXT_STATUS[order.status] !== status) {
+      throw new apiError(409, `Cannot change status from ${order.status} to ${status}`);
+    }
+
+    const updated = await Order.findOneAndUpdate(
+      { _id: id, status: order.status },
+      { status },
+      { new: true },
+    );
+    if (!updated) {
+      throw new apiError(409, "Order was just updated by someone else. Please refresh.");
+    }
+
+    emitOrderEvent("order:updated", updated);
+    return res
+      .status(200)
+      .json(new apiResponse(200, updated, "Order status updated succesfully"));
+  } catch (err) {
+    next(err);
   }
-  catch(err) {
-    next(err)
-  }
-}
+};
 
 
 const getOrderById = async(req,res,next) => {
