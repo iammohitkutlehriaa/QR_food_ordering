@@ -2,6 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ShoppingCart, Leaf, Drumstick, Plus, Trash2 } from "lucide-react";
+import { API_URL } from "../../utils/config.js";
 
 function Menu() {
   const [searchParams] = useSearchParams();
@@ -22,13 +23,13 @@ function Menu() {
     const fetchTable = async () => {
       try {
         const tableRes = await axios.get(
-          `http://localhost:8000/api/v1/tables/verify/${qrToken}`,
+          `${API_URL}/tables/verify/${qrToken}`,
         );
         setTableData(tableRes.data.data);
         localStorage.setItem("tableId", tableRes.data.data.table._id);
         const restaurantId = tableRes.data.data.restaurant._id;
         const catRes = await axios.get(
-          `http://localhost:8000/api/v1/categories/public/${restaurantId}`,
+          `${API_URL}/categories/public/${restaurantId}`,
         );
         setCategories(catRes.data.data);
         setSelectCategory(catRes.data.data[0]?._id.toString());
@@ -48,7 +49,7 @@ function Menu() {
       try {
         const restaurantId = tableData.restaurant._id;
         const menuRes = await axios.get(
-          `http://localhost:8000/api/v1/menu-items/public/${restaurantId}?categoryId=${selectCategory}`,
+          `${API_URL}/menu-items/public/${restaurantId}?categoryId=${selectCategory}`,
         );
         setMenuItems(menuRes.data.data);
         console.log(menuRes.data);

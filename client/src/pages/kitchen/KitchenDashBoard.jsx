@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { createSocket } from "../../utils/socket.js";
+import { API_URL } from "../../utils/config.js";
 
 const NEXT_STATUS = {
   pending: "confirmed",
@@ -20,7 +21,7 @@ function KitchenDashBoard() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/v1/orders/kitchen", {
+      const res = await axios.get(`${API_URL}/orders/kitchen`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOrders(res.data.data);
@@ -39,7 +40,7 @@ function KitchenDashBoard() {
   const advanceStatus = async (id, currentStatus) => {
     try {
       await axios.put(
-        `http://localhost:8000/api/v1/orders/${id}`,
+        `${API_URL}/orders/${id}`,
         { status: NEXT_STATUS[currentStatus] },
         { headers: { Authorization: `Bearer ${token}` } },
       );

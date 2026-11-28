@@ -9,7 +9,7 @@ import { emitOrderEvent } from "../socket.js";
 
 const placeOrder = async (req, res, next) => {
   try {
-    const { tableId, customerName, items } = req.body;
+    const { tableId, customerName, items, idempotencyKey } = req.body;
 
     if (!tableId || !mongoose.isValidObjectId(tableId)) {
       throw new apiError(400, "Valid tableId is required");
@@ -19,6 +19,14 @@ const placeOrder = async (req, res, next) => {
     }
     if (!Array.isArray(items) || items.length === 0) {
       throw new apiError(400, "Order must have at least one item");
+    }
+    if(idempotencyKey) {
+      const existing = await Order.findOne({idempotencyKey});
+      if(existing) {
+        return res
+        .status(200)
+        .json(new apiResponse(200 , existing , "Order already created."));
+      }
     }
 
     const table = await Table.findById(tableId);
@@ -64,16 +72,26 @@ const placeOrder = async (req, res, next) => {
       };
     });
 
-    const createOrder = await Order.create({
-      
-      tableId,
-      tableNumber: table.tableNumber,
-      restaurantId: table.restaurantId,
-      customerName: customerName.trim(),
-      items: orderItems,
-      totalAmount,
-      
-    });
+    let createOrder;
+    try {
+      createOrder = await Order.create({
+        tableId,
+        tableNumber: table.tableNumber,
+        restaurantId : table.restaurantId,
+        customerName: customerName.trim(),
+        items: orderItems,
+        totalAmount,
+        idempotencyKey: idempotencyKey || undefined,
+      });
+    } catch( err) {
+      if(err.code === 11000 && idempotencyKey) {
+        const existing = await Order.findOne({idempotencyKey});
+        return res
+        .status(200)
+        .json(new apiResponse(200, existing, "Order already created."));
+      } 
+      throw err;
+    }
     emitOrderEvent("order:new", createOrder);
     return res
       .status(201)

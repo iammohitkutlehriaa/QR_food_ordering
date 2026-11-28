@@ -48,10 +48,18 @@ const orderSchema = new mongoose.Schema(
     },
     razorpayOrderId: { type: String, default: "" },
     razorpayPaymentId: { type: String, default: "" },
+    
+    idempotencyKey: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
   },
+
   { timestamps: true });
   orderSchema.index({restaurantId: 1, status: 1});
   orderSchema.index({tableId: 1});
+
 
 
 const Order = mongoose.model("Order", orderSchema);

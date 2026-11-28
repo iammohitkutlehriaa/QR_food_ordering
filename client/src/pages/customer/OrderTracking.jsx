@@ -10,8 +10,9 @@ import {
   Circle,
 } from "lucide-react";
 import { createSocket } from "../../utils/socket.js";
+import { API_URL } from "../../utils/config.js";
 
-const API = "http://localhost:8000/api/v1";
+const API = API_URL;;
 
 const statuses = [
   { key: "pending", label: "Pending", icon: <Clock3 size={20} /> },
